@@ -12,7 +12,7 @@ import { sampleDoctors, sampleAppointments } from '../data/seed'
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth()
-  const { notifications, markAsRead, unreadCount } = useNotifications()
+  const { notifications, markAsRead } = useNotifications()
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [showNotifications, setShowNotifications] = useState(false)

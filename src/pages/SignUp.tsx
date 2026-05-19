@@ -17,7 +17,7 @@ const SignUp: React.FC = () => {
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { signup, updateFingerprintCredential } = useAuth()
+  const { signup } = useAuth()
   const { registerFingerprint, isSupported, isAuthenticating } = useFingerprintAuth()
   const navigate = useNavigate()
 

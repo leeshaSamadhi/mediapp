@@ -4,8 +4,7 @@ import Card from '../components/ui/Card'
 import Avatar from '../components/ui/Avatar'
 import Button from '../components/ui/Button'
 import Icon from '../components/ui/Icon'
-import { Doctor, Appointment, PaymentMethod } from '../models/types'
-import useNotifications from '../hooks/useNotifications'
+import { PaymentMethod } from '../models/types'
 
 const PaymentDetails: React.FC = () => {
   const location = useLocation()
@@ -56,8 +55,6 @@ const PaymentDetails: React.FC = () => {
       default: return 'creditCard'
     }
   }
-
-  const selectedMethod = paymentMethods.find(m => m.id === selectedPaymentMethod)
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
