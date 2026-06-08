@@ -290,3 +290,268 @@ COMMENT ON TABLE public.favorites IS 'Stores user favorite doctors';
 COMMENT ON TABLE public.faqs IS 'Stores FAQ entries';
 COMMENT ON TABLE public.services IS 'Stores available medical services';
 COMMENT ON TABLE public.doctor_schedule IS 'Stores doctor appointment time slots';
+
+-- =============================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- =============================================
+
+-- Enable RLS on all tables
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fingerprint_auth ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.doctors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payment_methods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.faqs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.doctor_schedule ENABLE ROW LEVEL SECURITY;
+
+-- =============================================
+-- RLS POLICIES: USERS
+-- Users can view and update only their own profile
+-- =============================================
+DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
+CREATE POLICY "Users can view own profile"
+    ON public.users FOR SELECT
+    TO authenticated
+    USING (id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
+CREATE POLICY "Users can update own profile"
+    ON public.users FOR UPDATE
+    TO authenticated
+    USING (id = auth.uid())
+    WITH CHECK (id = auth.uid());
+
+-- =============================================
+-- RLS POLICIES: FINGERPRINT_AUTH
+-- Users can manage only their own fingerprint data
+-- =============================================
+DROP POLICY IF EXISTS "Users can view own fingerprint auth" ON public.fingerprint_auth;
+CREATE POLICY "Users can view own fingerprint auth"
+    ON public.fingerprint_auth FOR SELECT
+    TO authenticated
+    USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own fingerprint auth" ON public.fingerprint_auth;
+CREATE POLICY "Users can insert own fingerprint auth"
+    ON public.fingerprint_auth FOR INSERT
+    TO authenticated
+    WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own fingerprint auth" ON public.fingerprint_auth;
+CREATE POLICY "Users can delete own fingerprint auth"
+    ON public.fingerprint_auth FOR DELETE
+    TO authenticated
+    USING (user_id = auth.uid());
+
+-- =============================================
+-- RLS POLICIES: DOCTORS
+-- Public read access for all authenticated users (doctor directory)
+-- No write access for regular users
+-- =============================================
+DROP POLICY IF EXISTS "Authenticated users can view doctors" ON public.doctors;
+CREATE POLICY "Authenticated users can view doctors"
+    ON public.doctors FOR SELECT
+    TO authenticated
+    USING (true);
+
+-- =============================================
+-- RLS POLICIES: APPOINTMENTS
+-- Users can manage only their own appointments
+-- =============================================
+DROP POLICY IF EXISTS "Users can view own appointments" ON public.appointments;
+CREATE POLICY "Users can view own appointments"
+    ON public.appointments FOR SELECT
+    TO authenticated
+    USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own appointments" ON public.appointments;
+CREATE POLICY "Users can insert own appointments"
+    ON public.appointments FOR INSERT
+    TO authenticated
+    WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own appointments" ON public.appointments;
+CREATE POLICY "Users can update own appointments"
+    ON public.appointments FOR UPDATE
+    TO authenticated
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own appointments" ON public.appointments;
+CREATE POLICY "Users can delete own appointments"
+    ON public.appointments FOR DELETE
+    TO authenticated
+    USING (user_id = auth.uid());
+
+-- =============================================
+-- RLS POLICIES: REVIEWS
+-- All authenticated users can view reviews
+-- Users can manage reviews linked to their own appointments
+-- =============================================
+DROP POLICY IF EXISTS "Authenticated users can view reviews" ON public.reviews;
+CREATE POLICY "Authenticated users can view reviews"
+    ON public.reviews FOR SELECT
+    TO authenticated
+    USING (true);
+
+DROP POLICY IF EXISTS "Users can insert reviews for own appointments" ON public.reviews;
+CREATE POLICY "Users can insert reviews for own appointments"
+    ON public.reviews FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.appointments
+            WHERE appointments.id = appointment_id
+            AND appointments.user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can update reviews for own appointments" ON public.reviews;
+CREATE POLICY "Users can update reviews for own appointments"
+    ON public.reviews FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.appointments
+            WHERE appointments.id = appointment_id
+            AND appointments.user_id = auth.uid()
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.appointments
+            WHERE appointments.id = appointment_id
+            AND appointments.user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can delete reviews for own appointments" ON public.reviews;
+CREATE POLICY "Users can delete reviews for own appointments"
+    ON public.reviews FOR DELETE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.appointments
+            WHERE appointments.id = appointment_id
+            AND appointments.user_id = auth.uid()
+        )
+    );
+
+-- =============================================
+-- RLS POLICIES: PAYMENT_METHODS
+-- Users can manage only their own payment methods (strictest)
+-- =============================================
+DROP POLICY IF EXISTS "Users can view own payment methods" ON public.payment_methods;
+CREATE POLICY "Users can view own payment methods"
+    ON public.payment_methods FOR SELECT
+    TO authenticated
+    USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own payment methods" ON public.payment_methods;
+CREATE POLICY "Users can insert own payment methods"
+    ON public.payment_methods FOR INSERT
+    TO authenticated
+    WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own payment methods" ON public.payment_methods;
+CREATE POLICY "Users can update own payment methods"
+    ON public.payment_methods FOR UPDATE
+    TO authenticated
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own payment methods" ON public.payment_methods;
+CREATE POLICY "Users can delete own payment methods"
+    ON public.payment_methods FOR DELETE
+    TO authenticated
+    USING (user_id = auth.uid());
+
+-- =============================================
+-- RLS POLICIES: NOTIFICATIONS
+-- Users can view and update only their own notifications
+-- =============================================
+DROP POLICY IF EXISTS "Users can view own notifications" ON public.notifications;
+CREATE POLICY "Users can view own notifications"
+    ON public.notifications FOR SELECT
+    TO authenticated
+    USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.notifications;
+CREATE POLICY "Users can update own notifications"
+    ON public.notifications FOR UPDATE
+    TO authenticated
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
+
+-- =============================================
+-- RLS POLICIES: CHAT_MESSAGES
+-- Users can view and send messages where they are sender or receiver
+-- =============================================
+DROP POLICY IF EXISTS "Users can view own chat messages" ON public.chat_messages;
+CREATE POLICY "Users can view own chat messages"
+    ON public.chat_messages FOR SELECT
+    TO authenticated
+    USING (sender_id = auth.uid() OR receiver_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own chat messages" ON public.chat_messages;
+CREATE POLICY "Users can insert own chat messages"
+    ON public.chat_messages FOR INSERT
+    TO authenticated
+    WITH CHECK (sender_id = auth.uid());
+
+-- =============================================
+-- RLS POLICIES: FAVORITES
+-- Users can manage only their own favorites
+-- =============================================
+DROP POLICY IF EXISTS "Users can view own favorites" ON public.favorites;
+CREATE POLICY "Users can view own favorites"
+    ON public.favorites FOR SELECT
+    TO authenticated
+    USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own favorites" ON public.favorites;
+CREATE POLICY "Users can insert own favorites"
+    ON public.favorites FOR INSERT
+    TO authenticated
+    WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own favorites" ON public.favorites;
+CREATE POLICY "Users can delete own favorites"
+    ON public.favorites FOR DELETE
+    TO authenticated
+    USING (user_id = auth.uid());
+
+-- =============================================
+-- RLS POLICIES: FAQS
+-- Public read access for all authenticated users
+-- =============================================
+DROP POLICY IF EXISTS "Authenticated users can view faqs" ON public.faqs;
+CREATE POLICY "Authenticated users can view faqs"
+    ON public.faqs FOR SELECT
+    TO authenticated
+    USING (true);
+
+-- =============================================
+-- RLS POLICIES: SERVICES
+-- Public read access for all authenticated users
+-- =============================================
+DROP POLICY IF EXISTS "Authenticated users can view services" ON public.services;
+CREATE POLICY "Authenticated users can view services"
+    ON public.services FOR SELECT
+    TO authenticated
+    USING (true);
+
+-- =============================================
+-- RLS POLICIES: DOCTOR_SCHEDULE
+-- Public read access for all authenticated users (booking availability)
+-- =============================================
+DROP POLICY IF EXISTS "Authenticated users can view doctor schedule" ON public.doctor_schedule;
+CREATE POLICY "Authenticated users can view doctor schedule"
+    ON public.doctor_schedule FOR SELECT
+    TO authenticated
+    USING (true);
