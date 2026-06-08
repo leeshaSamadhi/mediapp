@@ -4,9 +4,11 @@ A full-stack medical appointment booking application with a React frontend and F
 
 ## Architecture
 
-- **Frontend**: React + TypeScript + Vite
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
 - **Backend**: FastAPI (Python)
 - **Database**: PostgreSQL (via Supabase)
+- **Routing**: React Router DOM v6
+- **Deployment**: GitHub Pages (frontend)
 
 ## Features
 
@@ -15,19 +17,24 @@ A full-stack medical appointment booking application with a React frontend and F
 - Login with email/mobile and password
 - Fingerprint authentication support
 - JWT token-based authentication
+- Forgot password and reset password flows
 - Profile management
 
 ### Doctors
 - Browse doctors by specialty
 - Search doctors by name or specialty
-- View doctor details and availability
+- View doctor details, experience, and availability
+- View doctor appointment schedule
 - Add/remove doctors from favorites
 
 ### Appointments
 - Book appointments with doctors
+- Select appointment date and time slots
 - View upcoming and past appointments
+- Appointment summary after booking
 - Cancel appointments with reason
-- Appointment status tracking
+- Appointment status tracking (upcoming, completed, cancelled)
+- Calendar view for appointments
 
 ### Reviews
 - Review completed appointments
@@ -38,10 +45,12 @@ A full-stack medical appointment booking application with a React frontend and F
 - Add/manage payment methods
 - Support for credit/debit cards, Apple Pay, PayPal, Google Pay
 - Default payment method selection
+- Secure payment details entry
 
 ### Notifications
 - Appointment reminders
 - System notifications
+- Notification settings management
 - Mark as read functionality
 
 ### Chat
@@ -49,36 +58,111 @@ A full-stack medical appointment booking application with a React frontend and F
 - View conversation history
 - Read/unread status
 
+### Settings
+- Profile editing
+- Password manager
+- Notification preferences
+- Privacy policy
+
 ### Additional Features
+- Splash and welcome screens
 - Favorites management
 - FAQs
 - Medical services listing
-- Help center
+- Help centre
+- Protected routes (authentication-gated)
 
 ## Project Structure
 
 ```
 mediapp/
+├── README.md
+├── .gitignore
 ├── backend/
-│   ├── main.py              # FastAPI application with all endpoints
-│   ├── database.py          # Database connection and operations
-│   ├── schema.sql           # Database schema definition
-│   ├── seed_data.py         # Sample data population
-│   ├── requirements.txt     # Python dependencies
-│   ├── .env                 # Environment variables
-│   └── venv/                # Python virtual environment
+│   ├── main.py                    # FastAPI application with all endpoints
+│   ├── database.py                # Database connection and operations
+│   ├── schema.sql                 # Database schema definition
+│   ├── seed_data.py               # Sample data population
+│   ├── requirements.txt           # Python dependencies
+│   ├── check_tables.py            # Database table inspection utility
+│   ├── test_appointments.py       # Appointment API tests
+│   ├── test_profile_update.py     # Profile update API tests
+│   ├── test_database_connection.py# Database connection tests
+│   ├── .env                       # Environment variables (gitignored)
+│   ├── .env.example               # Example environment variables
+│   ├── venv/                      # Python virtual environment
+│   └── __pycache__/               # Python bytecode cache
 ├── frontend/
-│   ├── src/
-│   │   ├── services/
-│   │   │   └── api.ts       # API service layer
-│   │   ├── hooks/
-│   │   │   └── useAuth.ts   # Authentication hook
-│   │   ├── pages/           # React page components
-│   │   ├── components/      # Reusable components
-│   │   └── models/          # TypeScript types
-│   ├── .env                 # Frontend environment variables
-│   └── package.json         # Node dependencies
-└── README.md
+│   ├── index.html                 # HTML entry point
+│   ├── package.json               # Node dependencies and scripts
+│   ├── package-lock.json          # Locked dependency versions
+│   ├── vite.config.ts             # Vite configuration
+│   ├── tsconfig.json              # TypeScript configuration
+│   ├── tsconfig.node.json         # Node TypeScript configuration
+│   ├── tailwind.config.js         # Tailwind CSS configuration
+│   ├── postcss.config.js          # PostCSS configuration
+│   ├── .env                       # Frontend environment variables
+│   ├── public/                    # Static assets
+│   └── src/
+│       ├── main.tsx               # Application entry point
+│       ├── App.tsx                # Root component with routing
+│       ├── index.css              # Global styles
+│       ├── vite-env.d.ts          # Vite type declarations
+│       ├── components/
+│       │   ├── ProtectedRoute.tsx # Auth-guarded route wrapper
+│       │   ├── layout/
+│       │   │   ├── CardLayout.tsx # Card-based layout component
+│       │   │   └── CenterContainer.tsx # Centered content container
+│       │   └── ui/
+│       │       ├── Avatar.tsx     # User avatar component
+│       │       ├── Button.tsx     # Reusable button component
+│       │       ├── Card.tsx       # Card component
+│       │       ├── CardDetailsModal.tsx # Card details modal
+│       │       ├── CreditCardIllustration.tsx # Credit card visual
+│       │       ├── Icon.tsx       # Icon component
+│       │       ├── Input.tsx      # Form input component
+│       │       ├── Navbar.tsx     # Navigation bar
+│       │       ├── NotificationDropdown.tsx # Notification dropdown
+│       │       └── Toggle.tsx     # Toggle switch component
+│       ├── data/
+│       │   └── seed.ts            # Frontend seed/initial data
+│       ├── hooks/
+│       │   ├── useAuth.ts         # Authentication hook
+│       │   ├── useChat.ts         # Chat functionality hook
+│       │   ├── useFingerprintAuth.ts # Fingerprint auth hook
+│       │   ├── useLocalStorage.ts # Local storage hook
+│       │   └── useNotifications.ts # Notifications hook
+│       ├── models/
+│       │   └── types.ts           # TypeScript type definitions
+│       ├── pages/
+│       │   ├── Splash.tsx         # Splash/loading screen
+│       │   ├── Welcome.tsx        # Welcome/onboarding screen
+│       │   ├── Login.tsx          # Login page
+│       │   ├── SignUp.tsx         # Registration page
+│       │   ├── ForgotPassword.tsx # Forgot password page
+│       │   ├── ResetPassword.tsx  # Reset password page
+│       │   ├── Home.tsx           # Home/dashboard page
+│       │   ├── Doctors.tsx        # Doctor listing page
+│       │   ├── DoctorDetail.tsx   # Doctor detail page
+│       │   ├── Favorites.tsx      # Favorite doctors page
+│       │   ├── AppointmentBooking.tsx # Appointment booking page
+│       │   ├── AppointmentSummary.tsx # Appointment summary page
+│       │   ├── Calendar.tsx       # Calendar view page
+│       │   ├── Payments.tsx       # Payment methods page
+│       │   ├── PaymentDetails.tsx # Payment details entry page
+│       │   ├── Notifications.tsx  # Notifications page
+│       │   ├── NotificationSettings.tsx # Notification settings page
+│       │   ├── Chats.tsx          # Chat list page
+│       │   ├── ChatConversation.tsx # Chat conversation page
+│       │   ├── Profile.tsx        # User profile page
+│       │   ├── Settings.tsx       # Settings page
+│       │   ├── PasswordManager.tsx # Password management page
+│       │   ├── HelpCentre.tsx     # Help centre page
+│       │   └── PrivacyPolicy.tsx  # Privacy policy page
+│       ├── services/
+│       │   └── api.ts             # API service layer
+│       └── utils/
+│           └── constants.ts       # Application constants
 ```
 
 ## Setup Instructions
@@ -86,7 +170,7 @@ mediapp/
 ### Prerequisites
 - Python 3.8+
 - Node.js 16+
-- npm or yarn
+- npm
 - PostgreSQL database (via Supabase)
 
 ### Backend Setup
@@ -111,7 +195,7 @@ mediapp/
    pip install -r requirements.txt
    ```
 
-5. Configure environment variables in `.env`:
+5. Configure environment variables by copying `.env.example` to `.env` and updating the values:
    ```
    SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_ANON_KEY=your-anon-key
@@ -162,6 +246,10 @@ mediapp/
 
 ## API Endpoints
 
+### Health & Root
+- `GET /` - Welcome endpoint with API version
+- `GET /health` - Health check endpoint
+
 ### Authentication
 - `POST /signup` - Create new user account
 - `POST /login` - Login with email/mobile and password
@@ -170,19 +258,20 @@ mediapp/
 ### Profile
 - `GET /profile/{user_id}` - Get user profile
 - `PUT /profile/{user_id}` - Update user profile
+- `PUT /profile/{user_id}/password` - Change user password
 
 ### Doctors
-- `GET /doctors` - List all doctors (with optional filters)
-- `GET /doctors/{doctor_id}` - Get doctor details
+- `GET /doctors` - List all doctors (with optional filters: specialty, search, user_id)
+- `GET /doctors/{doctor_id}` - Get doctor details with schedule
 - `POST /doctors/{doctor_id}/favorite` - Toggle favorite status
 
 ### Appointments
-- `GET /appointments` - List user appointments
+- `GET /appointments` - List user appointments (with optional status filter)
 - `POST /appointments` - Create new appointment
-- `PUT /appointments/{appointment_id}` - Update appointment
+- `PUT /appointments/{appointment_id}` - Update appointment (status, cancel reason)
 
 ### Reviews
-- `GET /reviews` - List reviews
+- `GET /reviews` - List reviews (with optional doctor/appointment filter)
 - `POST /reviews` - Create review
 
 ### Payment Methods
@@ -231,13 +320,13 @@ mediapp/
 The database includes the following tables:
 - `users` - User accounts and profiles
 - `fingerprint_auth` - Fingerprint authentication data
-- `doctors` - Doctor information
-- `doctor_schedule` - Doctor availability slots
+- `doctors` - Doctor information and availability
+- `doctor_schedule` - Doctor appointment time slots
 - `appointments` - Appointment bookings
 - `reviews` - Doctor reviews
 - `payment_methods` - User payment methods
 - `notifications` - User notifications
-- `chat_messages` - Chat messages
+- `chat_messages` - Chat messages between users and doctors
 - `favorites` - User favorite doctors
 - `faqs` - FAQ entries
 - `services` - Medical services
@@ -250,9 +339,9 @@ The database includes the following tables:
 cd backend
 python -m pytest
 
-# Frontend tests
+# Frontend build verification
 cd frontend
-npm test
+npm run build
 ```
 
 ### Building for Production
@@ -260,6 +349,9 @@ npm test
 # Frontend build
 cd frontend
 npm run build
+
+# Frontend deploy to GitHub Pages
+npm run deploy
 
 # Backend - use a production WSGI server like Gunicorn
 pip install gunicorn
