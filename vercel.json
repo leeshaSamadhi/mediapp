@@ -17,6 +17,7 @@
     { "src": "/health(.*)", "dest": "/api/index.py" },
     { "src": "/signup(.*)", "dest": "/api/index.py" },
     { "src": "/login(.*)", "dest": "/api/index.py" },
+    { "src": "/auth(.*)", "dest": "/api/index.py" },
     { "src": "/profile/(.*)", "dest": "/api/index.py" },
     { "src": "/doctors(.*)", "dest": "/api/index.py" },
     { "src": "/appointments(.*)", "dest": "/api/index.py" },
