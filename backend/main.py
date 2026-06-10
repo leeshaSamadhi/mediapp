@@ -38,12 +38,9 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24 * 60  # 30 days
 
 # CORS configuration
-ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://localhost:3000",
-]
+# Allow all origins for deployment (Vercel, localhost, etc.)
+# Auth uses Bearer tokens (not cookies), so allow_credentials is not needed
+ALLOWED_ORIGINS = ["*"]
 
 
 @asynccontextmanager
@@ -72,7 +69,7 @@ app = FastAPI(title="Medi App API", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

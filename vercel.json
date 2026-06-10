@@ -47,8 +47,8 @@
     { "src": "/faqs", "dest": "api/index.py" },
     { "src": "/services", "dest": "api/index.py" },
 
-    { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
     { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/frontend/index.html" }
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
