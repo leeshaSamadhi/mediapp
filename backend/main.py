@@ -3,7 +3,7 @@ Medi App Backend - FastAPI Application
 """
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 
 import bcrypt
@@ -26,6 +26,7 @@ from database import (
     init_database,
     get_connection,
 )
+from email_service import send_reset_code
 
 # Load environment variables from backend/.env
 _env_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -166,6 +167,20 @@ class ChatMessageCreate(BaseModel):
 class FavoriteToggle(BaseModel):
     doctor_id: str
     user_id: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str = Field(..., min_length=1)
+
+
+class VerifyResetCodeRequest(BaseModel):
+    email: str = Field(..., min_length=1)
+    code: str = Field(..., min_length=6, max_length=6)
+
+
+class ResetPasswordWithTokenRequest(BaseModel):
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6)
 
 
 # =============================================
@@ -400,6 +415,189 @@ async def login_with_fingerprint(login_data: FingerprintLogin):
             "created_at": full_user["created_at"].isoformat() if full_user["created_at"] else None,
         },
     )
+
+
+# =============================================
+# API Routes - Password Reset (Email Code)
+# =============================================
+
+RESET_TOKEN_EXPIRE_MINUTES = 10
+RESET_CODE_MAX_ATTEMPTS = 5
+
+
+@app.post("/auth/forgot-password")
+def forgot_password(request: ForgotPasswordRequest):
+    """
+    Request a password reset code.
+    Generates a 6-digit code, stores it hashed in the database,
+    and sends it to the user's email.
+    
+    Always returns success to prevent email enumeration.
+    """
+    try:
+        # Look up user by email (don't reveal if not found)
+        user = get_user_by_email(request.email)
+        
+        if user:
+            # Generate 6-digit code
+            import random
+            code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            
+            # Hash the code for storage
+            code_hash = hash_password(code)
+            
+            # Set expiry (10 minutes from now)
+            expires_at = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
+            
+            # Invalidate any previous unused codes for this user
+            execute_query(
+                "UPDATE public.password_reset_codes SET used = TRUE WHERE user_id = %s AND used = FALSE",
+                (str(user["id"]),),
+                fetch_all=False
+            )
+            
+            # Store the new code
+            execute_query(
+                """
+                INSERT INTO public.password_reset_codes (user_id, code_hash, expires_at)
+                VALUES (%s, %s, %s)
+                """,
+                (str(user["id"]), code_hash, expires_at),
+                fetch_all=False
+            )
+            
+            # Send the code via email
+            email_sent = send_reset_code(request.email, code)
+            
+            if email_sent:
+                print(f"[RESET] Code sent to {request.email}")
+            else:
+                # Email service will log the code to console if SMTP not configured
+                print(f"[RESET] Email send failed. Code for {request.email}: {code}")
+        else:
+            print(f"[RESET] No user found with email: {request.email}")
+    
+    except Exception as e:
+        # Log the error but still return success to prevent email enumeration
+        print(f"[RESET] Error processing forgot-password for {request.email}: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # Always return success (prevent email enumeration)
+    return {"message": "If an account with that email exists, a reset code has been sent."}
+
+
+@app.post("/auth/verify-reset-code")
+def verify_reset_code(request: VerifyResetCodeRequest):
+    """
+    Verify a password reset code.
+    If valid, returns a short-lived reset JWT token that authorizes password change.
+    """
+    # Find user by email
+    user = get_user_by_email(request.email)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+    
+    # Get the most recent unused code for this user
+    reset_record = execute_query(
+        """
+        SELECT * FROM public.password_reset_codes 
+        WHERE user_id = %s AND used = FALSE 
+        ORDER BY created_at DESC 
+        LIMIT 1
+        """,
+        (str(user["id"]),),
+        fetch_one=True
+    )
+    
+    if not reset_record:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+    
+    # Check if code has expired
+    if datetime.now(timezone.utc) > reset_record["expires_at"]:
+        execute_query(
+            "UPDATE public.password_reset_codes SET used = TRUE WHERE id = %s",
+            (str(reset_record["id"]),),
+            fetch_all=False
+        )
+        raise HTTPException(status_code=400, detail="Reset code has expired. Please request a new one.")
+    
+    # Check attempt limit
+    if reset_record["attempts"] >= RESET_CODE_MAX_ATTEMPTS:
+        execute_query(
+            "UPDATE public.password_reset_codes SET used = TRUE WHERE id = %s",
+            (str(reset_record["id"]),),
+            fetch_all=False
+        )
+        raise HTTPException(status_code=400, detail="Too many failed attempts. Please request a new code.")
+    
+    # Verify the code
+    if not verify_password(request.code, reset_record["code_hash"]):
+        # Increment attempts
+        execute_query(
+            "UPDATE public.password_reset_codes SET attempts = attempts + 1 WHERE id = %s",
+            (str(reset_record["id"]),),
+            fetch_all=False
+        )
+        raise HTTPException(status_code=400, detail="Invalid reset code")
+    
+    # Code is valid — mark it as used
+    execute_query(
+        "UPDATE public.password_reset_codes SET used = TRUE WHERE id = %s",
+        (str(reset_record["id"]),),
+        fetch_all=False
+    )
+    
+    # Generate a short-lived reset JWT token
+    reset_token = jwt.encode(
+        {
+            "sub": str(user["id"]),
+            "email": user["email"],
+            "type": "password_reset",
+            "exp": datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES),
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+    
+    return {"message": "Code verified successfully", "reset_token": reset_token}
+
+
+@app.post("/auth/reset-password")
+def reset_password_with_token(request: ResetPasswordWithTokenRequest):
+    """
+    Reset password using a verified reset JWT token.
+    The token is obtained from /auth/verify-reset-code.
+    """
+    # Decode and verify the reset token
+    try:
+        payload = jwt.decode(request.token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Reset token has expired. Please start over.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+    
+    # Verify this is a password reset token
+    if payload.get("type") != "password_reset":
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+    
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+    
+    # Verify user still exists
+    user = get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Hash and update the new password
+    hashed_password = hash_password(request.new_password)
+    try:
+        update_user(user_id, password_hash=hashed_password)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update password: {str(e)}")
+    
+    return {"message": "Password has been reset successfully"}
 
 
 # =============================================

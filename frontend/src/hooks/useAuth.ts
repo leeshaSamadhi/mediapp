@@ -232,68 +232,9 @@ const useAuth = () => {
     }
   }, [])
 
-  // Generate reset token for password reset
-  const generateResetToken = useCallback((email: string): string | null => {
-    // Generate a client-side token for the reset flow UI
-    // In production this would be handled by the backend sending an email
-    try {
-      const token = `reset-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-      const expiration = Date.now() + 15 * 60 * 1000 // 15 minutes
-      // Store token with email and expiration temporarily in memory/localStorage
-      const tokenData = { email, token, expiration }
-      localStorage.setItem('RESET_TOKEN', JSON.stringify(tokenData))
-      return token
-    } catch (error) {
-      console.error('Error generating reset token:', error)
-      return null
-    }
-  }, [])
-
-  // Verify reset token
-  const verifyResetToken = useCallback((token: string): { valid: boolean; email?: string; error?: string } => {
-    try {
-      const storedToken = localStorage.getItem('RESET_TOKEN')
-      if (!storedToken) {
-        return { valid: false, error: 'No reset token found' }
-      }
-      const tokenData = JSON.parse(storedToken)
-      if (tokenData.token !== token) {
-        return { valid: false, error: 'Invalid reset token' }
-      }
-      if (Date.now() > tokenData.expiration) {
-        localStorage.removeItem('RESET_TOKEN')
-        return { valid: false, error: 'Reset token has expired' }
-      }
-      return { valid: true, email: tokenData.email }
-    } catch (error) {
-      console.error('Error verifying reset token:', error)
-      return { valid: false, error: 'Error verifying token' }
-    }
-  }, [])
-
-  // Reset password with token — uses backend API
-  const resetPasswordWithToken = useCallback(async (token: string, newPassword: string): Promise<boolean> => {
-    try {
-      const verification = verifyResetToken(token)
-      if (!verification.valid || !verification.email) {
-        return false
-      }
-      // We need to find the user ID for this email to call the backend
-      // The token flow is client-side only, so we need to look up the user
-      // For now, we'll use the stored current user if available
-      const storedUser = localStorage.getItem('CURRENT_USER')
-      if (!storedUser) return false
-      const user = JSON.parse(storedUser)
-      if (user.email !== verification.email) return false
-
-      await profileApi.changePassword(user.id, { new_password: newPassword })
-      localStorage.removeItem('RESET_TOKEN')
-      return true
-    } catch (error) {
-      console.error('Error resetting password with token:', error)
-      return false
-    }
-  }, [verifyResetToken])
+  // Note: Password reset via email code is handled entirely by the backend API
+  // (see resetPasswordApi in services/api.ts) and the ForgotPassword,
+  // VerifyResetCode, and ResetPassword pages. No client-side token logic needed.
 
   // Reset password (for logged in users) — uses backend API
   const resetPassword = useCallback(async (newPassword: string, currentPassword?: string): Promise<boolean> => {
@@ -351,9 +292,6 @@ const useAuth = () => {
     logout,
     updateProfile,
     resetPassword,
-    generateResetToken,
-    verifyResetToken,
-    resetPasswordWithToken,
     findUserByCredentialId,
     updateFingerprintCredential,
     loginWithFingerprint,

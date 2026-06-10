@@ -706,6 +706,43 @@ export const servicesApi = {
   },
 };
 
+// =============================================
+// Password Reset API
+// =============================================
+
+export const resetPasswordApi = {
+  /**
+   * Request a password reset code (sends email)
+   */
+  async requestCode(email: string): Promise<{ message: string }> {
+    return apiRequest<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  /**
+   * Verify the 6-digit reset code
+   * Returns a reset token on success
+   */
+  async verifyCode(email: string, code: string): Promise<{ message: string; reset_token: string }> {
+    return apiRequest<{ message: string; reset_token: string }>('/auth/verify-reset-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+  },
+
+  /**
+   * Reset password using the verified reset token
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return apiRequest<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, new_password: newPassword }),
+    });
+  },
+};
+
 // Export all APIs
 export default {
   auth: authApi,

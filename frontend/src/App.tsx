@@ -4,6 +4,7 @@ import Welcome from './pages/Welcome.tsx'
 import Login from './pages/Login.tsx'
 import SignUp from './pages/SignUp.tsx'
 import ForgotPassword from './pages/ForgotPassword.tsx'
+import VerifyResetCode from './pages/VerifyResetCode.tsx'
 import ResetPassword from './pages/ResetPassword.tsx'
 import Home from './pages/Home.tsx'
 import Doctors from './pages/Doctors.tsx'
@@ -34,6 +35,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/verify-reset-code" element={<VerifyResetCode />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       
       {/* Protected Routes */}

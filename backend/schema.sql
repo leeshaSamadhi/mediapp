@@ -222,6 +222,21 @@ CREATE TABLE IF NOT EXISTS public.services (
 );
 
 -- =============================================
+-- PASSWORD_RESET_CODES TABLE
+-- =============================================
+CREATE TABLE IF NOT EXISTS public.password_reset_codes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    code_hash TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    attempts INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reset_codes_user_id ON public.password_reset_codes(user_id);
+
+-- =============================================
 -- DOCTOR_SCHEDULE TABLE (for appointment slots)
 -- =============================================
 CREATE TABLE IF NOT EXISTS public.doctor_schedule (

@@ -1,37 +1,27 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import CenterContainer from '../components/layout/CenterContainer'
-import useAuth from '../hooks/useAuth'
+import { resetPasswordApi } from '../services/api'
 
 const ResetPassword: React.FC = () => {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [isValidToken, setIsValidToken] = useState<boolean | null>(null)
-  const [searchParams] = useSearchParams()
-  const { verifyResetToken, resetPasswordWithToken } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
-  const token = searchParams.get('token')
+  const resetToken = (location.state as { resetToken?: string })?.resetToken
+  const email = (location.state as { email?: string })?.email
 
   useEffect(() => {
-    if (!token) {
-      setIsValidToken(false)
-      setError('No reset token provided')
-      return
+    if (!resetToken) {
+      navigate('/forgot-password')
     }
-
-    const verification = verifyResetToken(token)
-    if (verification.valid) {
-      setIsValidToken(true)
-    } else {
-      setIsValidToken(false)
-      setError(verification.error || 'Invalid reset token')
-    }
-  }, [token, verifyResetToken])
+  }, [resetToken, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,56 +42,27 @@ const ResetPassword: React.FC = () => {
       return
     }
 
-    if (!token) {
-      setError('No reset token found')
+    if (!resetToken) {
+      setError('Reset session expired. Please start over.')
       return
     }
 
-    const success = await resetPasswordWithToken(token, newPassword)
-    if (success) {
+    setIsLoading(true)
+
+    try {
+      await resetPasswordApi.resetPassword(resetToken, newPassword)
       setSuccess(true)
       setTimeout(() => {
         navigate('/login')
       }, 2000)
-    } else {
-      setError('Failed to reset password. Token may have expired.')
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset password. Token may have expired.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  if (isValidToken === null) {
-    return (
-      <CenterContainer>
-        <div className="text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Verifying Token...</h1>
-          <p className="text-gray-600">Please wait while we verify your reset token.</p>
-        </div>
-      </CenterContainer>
-    )
-  }
-
-  if (!isValidToken) {
-    return (
-      <CenterContainer>
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Invalid Reset Link</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={() => navigate('/forgot-password')} variant="primary">
-            Request New Reset Link
-          </Button>
-        </div>
-      </CenterContainer>
-    )
-  }
+  if (!resetToken) return null
 
   if (success) {
     return (
@@ -124,7 +85,9 @@ const ResetPassword: React.FC = () => {
     <CenterContainer>
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Create New Password</h1>
-        <p className="text-gray-600">Enter your new password below</p>
+        <p className="text-gray-600">
+          {email ? `Resetting password for ${email}` : 'Enter your new password below'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -150,8 +113,8 @@ const ResetPassword: React.FC = () => {
           <p className="text-red-500 text-sm text-center">{error}</p>
         )}
 
-        <Button type="submit" variant="primary" fullWidth>
-          Reset Password
+        <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
+          {isLoading ? 'Resetting...' : 'Reset Password'}
         </Button>
       </form>
     </CenterContainer>

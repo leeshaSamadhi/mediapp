@@ -3,15 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import CenterContainer from '../components/layout/CenterContainer'
-import useAuth from '../hooks/useAuth'
+import { resetPasswordApi } from '../services/api'
 
 const ForgotPassword: React.FC = () => {
-  const [step, setStep] = useState<'email' | 'token'>('email')
   const [email, setEmail] = useState('')
-  const [generatedToken, setGeneratedToken] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { generateResetToken } = useAuth()
+  const [codeSent, setCodeSent] = useState(false)
   const navigate = useNavigate()
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -25,24 +23,22 @@ const ForgotPassword: React.FC = () => {
       return
     }
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    const token = generateResetToken(email)
-    if (token) {
-      setGeneratedToken(token)
-      setStep('token')
-    } else {
-      setError('Email not found. Please check your email address.')
+    try {
+      await resetPasswordApi.requestCode(email)
+      setCodeSent(true)
+    } catch (err: any) {
+      // Always show success message to prevent email enumeration
+      setCodeSent(true)
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
-  const handleTokenClick = () => {
-    navigate(`/reset-password?token=${generatedToken}`)
+  const handleContinueToCode = () => {
+    navigate('/verify-reset-code', { state: { email } })
   }
 
-  if (step === 'token') {
+  if (codeSent) {
     return (
       <CenterContainer>
         <div className="text-center mb-8">
@@ -53,30 +49,26 @@ const ForgotPassword: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Check Your Email</h1>
           <p className="text-gray-600 mb-6">
-            We've sent a password reset link to <strong>{email}</strong>
+            We've sent a 6-digit verification code to <strong>{email}</strong>
           </p>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-6 mb-6">
-          <p className="text-sm text-gray-600 mb-4">
-            For testing purposes, here's your reset token. In a real app, this would be sent to your email.
-          </p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-            <p className="text-xs text-gray-500 mb-2">Reset Token:</p>
-            <code className="text-sm font-mono text-blue-600 break-all">{generatedToken}</code>
+        <div className="space-y-4">
+          <Button onClick={handleContinueToCode} variant="primary" fullWidth>
+            Enter Verification Code
+          </Button>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-500 mb-2">
+              Didn't receive the code? Check your spam folder or
+            </p>
+            <button
+              onClick={() => { setCodeSent(false); setError('') }}
+              className="text-sm text-primary font-medium hover:underline"
+            >
+              Try Again
+            </button>
           </div>
-          <Button onClick={handleTokenClick} variant="primary" fullWidth>
-            Use Reset Token
-          </Button>
-        </div>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-500 mb-4">
-            Didn't receive the email? Check your spam folder or
-          </p>
-          <Button onClick={() => setStep('email')} variant="ghost" fullWidth>
-            Try Again
-          </Button>
         </div>
       </CenterContainer>
     )
@@ -87,7 +79,7 @@ const ForgotPassword: React.FC = () => {
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Forgot Password?</h1>
         <p className="text-gray-600">
-          Enter your email address and we'll send you a link to reset your password.
+          Enter your email address and we'll send you a verification code to reset your password.
         </p>
       </div>
 
@@ -105,7 +97,7 @@ const ForgotPassword: React.FC = () => {
         )}
 
         <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
-          {isLoading ? 'Sending...' : 'Send Reset Link'}
+          {isLoading ? 'Sending...' : 'Send Verification Code'}
         </Button>
       </form>
 
