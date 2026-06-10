@@ -78,99 +78,39 @@ A full-stack medical appointment booking application with a React frontend and F
 mediapp/
 ├── README.md
 ├── .gitignore
-├── vercel.json                   # Vercel deployment configuration
-├── requirements.txt              # Root-level Python deps (for Vercel serverless)
+├── vercel.json                       # Vercel deployment configuration
+├── requirements.txt                  # Root-level Python deps (for Vercel serverless)
 ├── api/
-│   └── index.py                  # Vercel serverless function entry point
+│   └── index.py                      # Vercel serverless function entry point
 ├── backend/
-│   ├── app/
-│   │   ├── __init__.py           # Python package marker
-│   │   └── main.py               # Vercel bridge module → imports backend/main.py
-│   ├── main.py                   # FastAPI application with all endpoints
-│   ├── database.py               # Database connection and operations
-│   ├── schema.sql                # Database schema definition
-│   ├── seed_data.py              # Sample data population
-│   ├── requirements.txt          # Python dependencies (local dev)
-│   ├── check_tables.py           # Database table inspection utility
-│   ├── test_appointments.py      # Appointment API tests
-│   ├── test_profile_update.py    # Profile update API tests
-│   ├── test_database_connection.py # Database connection tests
-│   ├── .env                      # Environment variables (gitignored)
-│   ├── .env.example              # Example environment variables
-│   ├── venv/                     # Python virtual environment
-│   └── __pycache__/              # Python bytecode cache
+│   ├── app/                          # Vercel bridge module (__init__.py, main.py)
+│   ├── main.py                       # FastAPI application with all endpoints
+│   ├── database.py                   # Database connection and operations
+│   ├── schema.sql                    # Database schema definition
+│   ├── seed_data.py                  # Sample data population
+│   ├── requirements.txt              # Python dependencies
+│   ├── .env.example                  # Example environment variables
+│   ├── check_tables.py               # Database table inspection utility
+│   └── test_*.py                     # API & database tests
 ├── frontend/
-│   ├── index.html                # HTML entry point
-│   ├── package.json              # Node dependencies and scripts
-│   ├── package-lock.json         # Locked dependency versions
-│   ├── vite.config.ts            # Vite configuration
-│   ├── tsconfig.json             # TypeScript configuration
-│   ├── tsconfig.node.json        # Node TypeScript configuration
-│   ├── tailwind.config.js        # Tailwind CSS configuration
-│   ├── postcss.config.js         # PostCSS configuration
-│   ├── .env                      # Frontend environment variables (local dev)
-│   ├── .env.production           # Production env (VITE_API_URL=/api)
-│   ├── public/                   # Static assets
+│   ├── index.html / package.json     # Entry point & dependencies
+│   ├── vite.config.ts                # Vite bundler configuration
+│   ├── tsconfig.json / tsconfig.node.json
+│   ├── tailwind.config.js / postcss.config.js
+│   ├── .env / .env.production        # Environment configuration
+│   ├── public/                       # Static assets
 │   └── src/
-│       ├── main.tsx              # Application entry point
-│       ├── App.tsx               # Root component with routing
-│       ├── index.css             # Global styles
-│       ├── vite-env.d.ts         # Vite type declarations
+│       ├── main.tsx / App.tsx / index.css
 │       ├── components/
-│       │   ├── ProtectedRoute.tsx # Auth-guarded route wrapper
-│       │   ├── layout/
-│       │   │   ├── CardLayout.tsx # Card-based layout component
-│       │   │   └── CenterContainer.tsx # Centered content container
-│       │   └── ui/
-│       │       ├── Avatar.tsx     # User avatar component
-│       │       ├── Button.tsx     # Reusable button component
-│       │       ├── Card.tsx       # Card component
-│       │       ├── CardDetailsModal.tsx # Card details modal
-│       │       ├── CreditCardIllustration.tsx # Credit card visual
-│       │       ├── Icon.tsx       # Icon component
-│       │       ├── Input.tsx      # Form input component
-│       │       ├── Navbar.tsx     # Navigation bar
-│       │       ├── NotificationDropdown.tsx # Notification dropdown
-│       │       └── Toggle.tsx     # Toggle switch component
-│       ├── data/
-│       │   └── seed.ts           # Frontend seed/initial data
-│       ├── hooks/
-│       │   ├── useAuth.ts        # Authentication hook
-│       │   ├── useChat.ts        # Chat functionality hook
-│       │   ├── useFingerprintAuth.ts # Fingerprint auth hook
-│       │   ├── useLocalStorage.ts # Local storage hook
-│       │   └── useNotifications.ts # Notifications hook
-│       ├── models/
-│       │   └── types.ts          # TypeScript type definitions
-│       ├── pages/
-│       │   ├── Splash.tsx        # Splash/loading screen
-│       │   ├── Welcome.tsx       # Welcome/onboarding screen
-│       │   ├── Login.tsx         # Login page
-│       │   ├── SignUp.tsx        # Registration page
-│       │   ├── ForgotPassword.tsx # Forgot password page
-│       │   ├── ResetPassword.tsx # Reset password page
-│       │   ├── Home.tsx          # Home/dashboard page
-│       │   ├── Doctors.tsx       # Doctor listing page
-│       │   ├── DoctorDetail.tsx  # Doctor detail page
-│       │   ├── Favorites.tsx     # Favorite doctors page
-│       │   ├── AppointmentBooking.tsx # Appointment booking page
-│       │   ├── AppointmentSummary.tsx # Appointment summary page
-│       │   ├── Calendar.tsx      # Calendar view page
-│       │   ├── Payments.tsx      # Payment methods page
-│       │   ├── PaymentDetails.tsx # Payment details entry page
-│       │   ├── Notifications.tsx # Notifications page
-│       │   ├── NotificationSettings.tsx # Notification settings page
-│       │   ├── Chats.tsx         # Chat list page
-│       │   ├── ChatConversation.tsx # Chat conversation page
-│       │   ├── Profile.tsx       # User profile page
-│       │   ├── Settings.tsx      # Settings page
-│       │   ├── PasswordManager.tsx # Password management page
-│       │   ├── HelpCentre.tsx    # Help centre page
-│       │   └── PrivacyPolicy.tsx # Privacy policy page
-│       ├── services/
-│       │   └── api.ts            # API service layer
-│       └── utils/
-│           └── constants.ts      # Application constants
+│       │   ├── ProtectedRoute.tsx    # Auth-guarded route wrapper
+│       │   ├── layout/               # CardLayout, CenterContainer
+│       │   └── ui/                   # Avatar, Button, Card, Icon, Input, Navbar, Toggle, etc.
+│       ├── pages/                    # 20+ pages: auth, doctors, appointments, payments, chat, settings
+│       ├── hooks/                    # useAuth, useChat, useFingerprintAuth, useLocalStorage, useNotifications
+│       ├── services/api.ts           # API service layer
+│       ├── models/types.ts           # TypeScript type definitions
+│       ├── data/seed.ts              # Seed/initial data
+│       └── utils/constants.ts        # Application constants
 ```
 
 ## Setup Instructions
