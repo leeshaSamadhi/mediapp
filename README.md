@@ -8,7 +8,7 @@ A full-stack medical appointment booking application with a React frontend and F
 - **Backend**: FastAPI (Python)
 - **Database**: PostgreSQL (via Supabase)
 - **Routing**: React Router DOM v6
-- **Deployment**: GitHub Pages (frontend)
+- **Deployment**: Vercel (frontend + serverless API)
 
 ## Features
 
@@ -78,36 +78,44 @@ A full-stack medical appointment booking application with a React frontend and F
 mediapp/
 ├── README.md
 ├── .gitignore
+├── vercel.json                   # Vercel deployment configuration
+├── requirements.txt              # Root-level Python deps (for Vercel serverless)
+├── api/
+│   └── index.py                  # Vercel serverless function entry point
 ├── backend/
-│   ├── main.py                    # FastAPI application with all endpoints
-│   ├── database.py                # Database connection and operations
-│   ├── schema.sql                 # Database schema definition
-│   ├── seed_data.py               # Sample data population
-│   ├── requirements.txt           # Python dependencies
-│   ├── check_tables.py            # Database table inspection utility
-│   ├── test_appointments.py       # Appointment API tests
-│   ├── test_profile_update.py     # Profile update API tests
-│   ├── test_database_connection.py# Database connection tests
-│   ├── .env                       # Environment variables (gitignored)
-│   ├── .env.example               # Example environment variables
-│   ├── venv/                      # Python virtual environment
-│   └── __pycache__/               # Python bytecode cache
+│   ├── app/
+│   │   ├── __init__.py           # Python package marker
+│   │   └── main.py               # Vercel bridge module → imports backend/main.py
+│   ├── main.py                   # FastAPI application with all endpoints
+│   ├── database.py               # Database connection and operations
+│   ├── schema.sql                # Database schema definition
+│   ├── seed_data.py              # Sample data population
+│   ├── requirements.txt          # Python dependencies (local dev)
+│   ├── check_tables.py           # Database table inspection utility
+│   ├── test_appointments.py      # Appointment API tests
+│   ├── test_profile_update.py    # Profile update API tests
+│   ├── test_database_connection.py # Database connection tests
+│   ├── .env                      # Environment variables (gitignored)
+│   ├── .env.example              # Example environment variables
+│   ├── venv/                     # Python virtual environment
+│   └── __pycache__/              # Python bytecode cache
 ├── frontend/
-│   ├── index.html                 # HTML entry point
-│   ├── package.json               # Node dependencies and scripts
-│   ├── package-lock.json          # Locked dependency versions
-│   ├── vite.config.ts             # Vite configuration
-│   ├── tsconfig.json              # TypeScript configuration
-│   ├── tsconfig.node.json         # Node TypeScript configuration
-│   ├── tailwind.config.js         # Tailwind CSS configuration
-│   ├── postcss.config.js          # PostCSS configuration
-│   ├── .env                       # Frontend environment variables
-│   ├── public/                    # Static assets
+│   ├── index.html                # HTML entry point
+│   ├── package.json              # Node dependencies and scripts
+│   ├── package-lock.json         # Locked dependency versions
+│   ├── vite.config.ts            # Vite configuration
+│   ├── tsconfig.json             # TypeScript configuration
+│   ├── tsconfig.node.json        # Node TypeScript configuration
+│   ├── tailwind.config.js        # Tailwind CSS configuration
+│   ├── postcss.config.js         # PostCSS configuration
+│   ├── .env                      # Frontend environment variables (local dev)
+│   ├── .env.production           # Production env (VITE_API_URL=/api)
+│   ├── public/                   # Static assets
 │   └── src/
-│       ├── main.tsx               # Application entry point
-│       ├── App.tsx                # Root component with routing
-│       ├── index.css              # Global styles
-│       ├── vite-env.d.ts          # Vite type declarations
+│       ├── main.tsx              # Application entry point
+│       ├── App.tsx               # Root component with routing
+│       ├── index.css             # Global styles
+│       ├── vite-env.d.ts         # Vite type declarations
 │       ├── components/
 │       │   ├── ProtectedRoute.tsx # Auth-guarded route wrapper
 │       │   ├── layout/
@@ -125,44 +133,44 @@ mediapp/
 │       │       ├── NotificationDropdown.tsx # Notification dropdown
 │       │       └── Toggle.tsx     # Toggle switch component
 │       ├── data/
-│       │   └── seed.ts            # Frontend seed/initial data
+│       │   └── seed.ts           # Frontend seed/initial data
 │       ├── hooks/
-│       │   ├── useAuth.ts         # Authentication hook
-│       │   ├── useChat.ts         # Chat functionality hook
+│       │   ├── useAuth.ts        # Authentication hook
+│       │   ├── useChat.ts        # Chat functionality hook
 │       │   ├── useFingerprintAuth.ts # Fingerprint auth hook
 │       │   ├── useLocalStorage.ts # Local storage hook
 │       │   └── useNotifications.ts # Notifications hook
 │       ├── models/
-│       │   └── types.ts           # TypeScript type definitions
+│       │   └── types.ts          # TypeScript type definitions
 │       ├── pages/
-│       │   ├── Splash.tsx         # Splash/loading screen
-│       │   ├── Welcome.tsx        # Welcome/onboarding screen
-│       │   ├── Login.tsx          # Login page
-│       │   ├── SignUp.tsx         # Registration page
+│       │   ├── Splash.tsx        # Splash/loading screen
+│       │   ├── Welcome.tsx       # Welcome/onboarding screen
+│       │   ├── Login.tsx         # Login page
+│       │   ├── SignUp.tsx        # Registration page
 │       │   ├── ForgotPassword.tsx # Forgot password page
-│       │   ├── ResetPassword.tsx  # Reset password page
-│       │   ├── Home.tsx           # Home/dashboard page
-│       │   ├── Doctors.tsx        # Doctor listing page
-│       │   ├── DoctorDetail.tsx   # Doctor detail page
-│       │   ├── Favorites.tsx      # Favorite doctors page
+│       │   ├── ResetPassword.tsx # Reset password page
+│       │   ├── Home.tsx          # Home/dashboard page
+│       │   ├── Doctors.tsx       # Doctor listing page
+│       │   ├── DoctorDetail.tsx  # Doctor detail page
+│       │   ├── Favorites.tsx     # Favorite doctors page
 │       │   ├── AppointmentBooking.tsx # Appointment booking page
 │       │   ├── AppointmentSummary.tsx # Appointment summary page
-│       │   ├── Calendar.tsx       # Calendar view page
-│       │   ├── Payments.tsx       # Payment methods page
+│       │   ├── Calendar.tsx      # Calendar view page
+│       │   ├── Payments.tsx      # Payment methods page
 │       │   ├── PaymentDetails.tsx # Payment details entry page
-│       │   ├── Notifications.tsx  # Notifications page
+│       │   ├── Notifications.tsx # Notifications page
 │       │   ├── NotificationSettings.tsx # Notification settings page
-│       │   ├── Chats.tsx          # Chat list page
+│       │   ├── Chats.tsx         # Chat list page
 │       │   ├── ChatConversation.tsx # Chat conversation page
-│       │   ├── Profile.tsx        # User profile page
-│       │   ├── Settings.tsx       # Settings page
+│       │   ├── Profile.tsx       # User profile page
+│       │   ├── Settings.tsx      # Settings page
 │       │   ├── PasswordManager.tsx # Password management page
-│       │   ├── HelpCentre.tsx     # Help centre page
-│       │   └── PrivacyPolicy.tsx  # Privacy policy page
+│       │   ├── HelpCentre.tsx    # Help centre page
+│       │   └── PrivacyPolicy.tsx # Privacy policy page
 │       ├── services/
-│       │   └── api.ts             # API service layer
+│       │   └── api.ts            # API service layer
 │       └── utils/
-│           └── constants.ts       # Application constants
+│           └── constants.ts      # Application constants
 ```
 
 ## Setup Instructions
@@ -200,7 +208,6 @@ mediapp/
    SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_ANON_KEY=your-anon-key
    DATABASE_URL=postgresql://username:password@host:5432/postgres
-   SECRET_KEY=your-secret-key
    ```
 
 6. Initialize the database:
@@ -344,19 +351,50 @@ cd frontend
 npm run build
 ```
 
-### Building for Production
-```powershell
-# Frontend build
-cd frontend
-npm run build
+### Building for Production (Vercel)
 
-# Frontend deploy to GitHub Pages
-npm run deploy
+This project is configured for deployment on Vercel with:
+- **Frontend**: React static build served by Vercel's CDN
+- **Backend**: FastAPI running as a Vercel serverless function at `/api/*`
 
-# Backend - use a production WSGI server like Gunicorn
-pip install gunicorn
-gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
+#### Vercel Deployment
+
+1. Connect your GitHub repository to Vercel
+2. Set the following environment variables in the Vercel dashboard:
+   - `DATABASE_URL` — PostgreSQL connection string (via Supabase)
+   - `SUPABASE_URL` — Your Supabase project URL
+   - `SUPABASE_ANON_KEY` — Your Supabase anonymous key
+3. Vercel will automatically:
+   - Install Python dependencies from `requirements.txt`
+   - Install frontend dependencies and build the React app
+   - Deploy the serverless function from `api/index.py`
+
+#### How the API Routing Works
+
 ```
+Browser → /api/* → Vercel rewrites → api/index.py (serverless)
+  → StripApiPrefix middleware → FastAPI routes in backend/main.py
+```
+
+The `vercel.json` configuration handles:
+- Frontend build (`cd frontend && npm run build`)
+- API path rewriting (`/api/*` → serverless function)
+- Output directory (`frontend/dist`)
+
+#### Local Development
+
+```powershell
+# Terminal 1: Start backend
+cd backend
+python main.py
+
+# Terminal 2: Start frontend
+cd frontend
+npm run dev
+```
+
+The frontend `.env` file should have `VITE_API_URL=http://localhost:8000` for local development.
+The `.env.production` file has `VITE_API_URL=/api` for Vercel deployment.
 
 ## Contributing
 

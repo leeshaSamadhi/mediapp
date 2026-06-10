@@ -13,10 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 from dotenv import load_dotenv
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(__file__))
-
+# Import database module - works both locally and in Vercel serverless
+# (backend/ is added to sys.path by api/index.py and backend/app/main.py)
 from database import (
     create_user,
     get_user_by_email,
@@ -29,8 +27,9 @@ from database import (
     get_connection,
 )
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from backend/.env
+_env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(_env_path)
 
 # JWT Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "medi-app-secret-key-change-in-production")

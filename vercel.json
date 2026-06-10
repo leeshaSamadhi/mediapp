@@ -1,9 +1,34 @@
 {
   "version": 2,
-  "installCommand": "cd frontend && npm install",
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/dist",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    { "src": "/health(.*)", "dest": "/api/index.py" },
+    { "src": "/signup(.*)", "dest": "/api/index.py" },
+    { "src": "/login(.*)", "dest": "/api/index.py" },
+    { "src": "/profile/(.*)", "dest": "/api/index.py" },
+    { "src": "/doctors(.*)", "dest": "/api/index.py" },
+    { "src": "/appointments(.*)", "dest": "/api/index.py" },
+    { "src": "/reviews(.*)", "dest": "/api/index.py" },
+    { "src": "/payment-methods(.*)", "dest": "/api/index.py" },
+    { "src": "/notifications(.*)", "dest": "/api/index.py" },
+    { "src": "/messages(.*)", "dest": "/api/index.py" },
+    { "src": "/favorites(.*)", "dest": "/api/index.py" },
+    { "src": "/faqs(.*)", "dest": "/api/index.py" },
+    { "src": "/services(.*)", "dest": "/api/index.py" },
+    { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/frontend/index.html" }
   ]
 }
